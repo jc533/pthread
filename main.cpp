@@ -22,32 +22,36 @@ int main(int argc, char** argv) {
 	std::string output_file_name(argv[3]);
 
 	// TOD0: implements main function
-	TSQueue<Item*> reader_queue(READER_QUEUE_SIZE);
-	TSQueue<Item*> worker_queue(WORKER_QUEUE_SIZE);
-	TSQueue<Item*> writer_queue(WRITER_QUEUE_SIZE);
+	TSQueue<Item*>* reader_queue = new TSQueue<Item*>(READER_QUEUE_SIZE);
+	TSQueue<Item*>* worker_queue = new TSQueue<Item*>(WORKER_QUEUE_SIZE);
+	TSQueue<Item*>* writer_queue = new TSQueue<Item*>(WRITER_QUEUE_SIZE);
 
-	Transformer transformer;
-	Reader reader(n, input_file_name, &reader_queue);
-	Writer writer(n, output_file_name, &writer_queue);
-	Producer producer(&reader_queue, &worker_queue, &transformer);
-	ConsumerController consumer_controller(&worker_queue, &writer_queue, &transformer, CONSUMER_CONTROLLER_CHECK_PERIOD, 
-											WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_LOW_THRESHOLD_PERCENTAGE / 100,
-											WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_HIGH_THRESHOLD_PERCENTAGE / 100);
+	Transformer* transformer = new Transformer();
+	
+	Reader* reader = new Reader(n, input_file_name, reader_queue);
+	reader->start();
+	Writer* writer = new Writer(n, output_file_name, writer_queue);
+	writer->start();
+	std::vector<Producer> producer(4, Producer(reader_queue, worker_queue, transformer));
 
-	reader.start();
-	writer.start();
-									
-	for(int i = 1; i <= 4; i++){
-		producer.start();
-		std::cout << "Starting producer no: " << i << '\n';
+	for (auto &prod: producer){
+		prod.start();
 	}
 	
-	consumer_controller.start();
-
+	ConsumerController* consumer_controller = new ConsumerController(worker_queue, writer_queue, transformer, CONSUMER_CONTROLLER_CHECK_PERIOD, 
+																	WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_LOW_THRESHOLD_PERCENTAGE / 100,
+																	WORKER_QUEUE_SIZE * CONSUMER_CONTROLLER_HIGH_THRESHOLD_PERCENTAGE / 100);
+	consumer_controller->start();
 	
+	reader->join();
+	writer->join();
 
-
-	
-	
+	delete reader;
+	delete writer;
+	delete consumer_controller;
+	delete transformer;
+	delete reader_queue;
+	delete worker_queue;
+	delete writer_queue;
 	return 0;
 }

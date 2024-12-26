@@ -27,7 +27,7 @@ private:
 
 	bool is_cancel;
 
-	pthread_t thread;
+	
 	// the method for pthread to create a consumer thread
 	static void* process(void* arg);
 };
@@ -41,13 +41,13 @@ Consumer::~Consumer() {}
 
 void Consumer::start() {
 	// TOD0: starts a Consumer thread
-	pthread_create(&thread, nullptr, Consumer::process, this);
+	pthread_create(&t, nullptr, Consumer::process, (void*)this);
 }
 
 int Consumer::cancel() {
 	// TOD0: cancels the consumer thread
 	is_cancel = true;
-	return pthread_cancel(thread);
+	return pthread_cancel(t);
 }
 
 void* Consumer::process(void* arg) {
@@ -59,15 +59,17 @@ void* Consumer::process(void* arg) {
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
 		// TOD0: implements the Consumer's work
-		Item* item = consumer->worker_queue->dequeue();
-		item->val = consumer->transformer->consumer_transform(item->opcode, item->val);
-		consumer->output_queue->enqueue(item);
-
+		if(consumer->worker_queue->get_size()){
+			Item* item = consumer->worker_queue->dequeue();
+			unsigned long long val = consumer->transformer->consumer_transform(item->opcode, item->val);
+			consumer->output_queue->enqueue(new Item(item->key, val, item->opcode));
+			delete item;
+		}
+			
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 	}
 
-	delete consumer;
-
+	
 	return nullptr;
 }
 

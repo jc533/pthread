@@ -44,13 +44,11 @@ void Reader::start() {
 
 void* Reader::process(void* arg) {
 	Reader* reader = (Reader*)arg;
-
 	while (reader->expected_lines--) {
 		Item *item = new Item;
 		reader->ifs >> *item;
 		reader->input_queue->enqueue(item);
 	}
-
 	return nullptr;
 }
 

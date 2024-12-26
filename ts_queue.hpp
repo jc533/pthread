@@ -52,6 +52,9 @@ template <class T>
 TSQueue<T>::TSQueue(int buffer_size) : buffer_size(buffer_size) {
 	// TOD0: implements TSQueue constructor
 	buffer = new T[buffer_size];
+	size = 0;
+	tail = 0;
+	head = buffer_size - 1;
 	pthread_mutex_init(&mutex, nullptr);
 	pthread_cond_init(&cond_enqueue, nullptr);
 	pthread_cond_init(&cond_dequeue, nullptr);
@@ -70,7 +73,7 @@ template <class T>
 void TSQueue<T>::enqueue(T item) {
 	// TOD0: enqueues an element to the end of the queue
 	pthread_mutex_lock(&mutex);
-	while(size = buffer_size){
+	while(size == buffer_size){
 		pthread_cond_wait(&cond_enqueue, &mutex);
 	}
 	buffer[tail] = item;
@@ -87,9 +90,9 @@ T TSQueue<T>::dequeue() {
 	while(size == 0){
 		pthread_cond_wait(&cond_dequeue, &mutex);
 	}
-
-	T item = buffer[head];
+	
 	head = (head+1) % buffer_size;
+	T item = buffer[head];
 	size--;
 	pthread_cond_signal(&cond_enqueue);
 	pthread_mutex_unlock(&mutex);

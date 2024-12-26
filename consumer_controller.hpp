@@ -34,7 +34,7 @@ private:
 	TSQueue<Item*>* writer_queue;
 
 	Transformer* transformer;
-	pthread_t thread;
+	
 	// Check to scale down or scale up every check period in microseconds.
 	int check_period;
 	// When the number of items in the worker queue is lower than low_threshold,
@@ -68,14 +68,14 @@ ConsumerController::~ConsumerController() {}
 
 void ConsumerController::start() {
 	// TOD0: starts a ConsumerController thread
-	pthread_create(&thread, nullptr, ConsumerController::process, this);
+	pthread_create(&t, nullptr, ConsumerController::process, (void*)this);
 }
 
 void* ConsumerController::process(void* arg) {
 	// TOD0: implements the ConsumerController's work
 	ConsumerController* controller = (ConsumerController*)arg;
 	while(1){
-		size_t queue_size = controller->worker_queue->get_size();
+		int queue_size = controller->worker_queue->get_size();
 		if(queue_size > controller->high_threshold){
 			Consumer* new_consumer = new Consumer(controller->worker_queue, controller->writer_queue, controller->transformer);
 			new_consumer->start();
@@ -88,11 +88,11 @@ void* ConsumerController::process(void* arg) {
 			consumer_cancel->cancel();
 			int size_before = controller->consumers.size();
 			controller->consumers.pop_back();
-			delete consumer_cancel;
 			std::cout << "Scaling down consumers from " << size_before-- << " to " << size_before << '\n';
 		}
-		usleep(controller -> check_period);
+		usleep(controller->check_period);
 	}
+	
 	return nullptr;
 }
 

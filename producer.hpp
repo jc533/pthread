@@ -22,7 +22,7 @@ private:
 
 	Transformer* transformer;
 
-	pthread_t thread;
+	
 	// the method for pthread to create a producer thread
 	static void* process(void* arg);
 };
@@ -35,18 +35,20 @@ Producer::~Producer() {}
 
 void Producer::start() {
 	// TOD0: starts a Producer thread
-	pthread_create(&thread, nullptr, Producer::process, this);
+	pthread_create(&t, nullptr, Producer::process, (void*)this);
 }
 
 void* Producer::process(void* arg) {
 	// TOD0: implements the Producer's work
 	Producer* producer = (Producer*)arg;
 	while(1){
-		Item* item = producer->input_queue->dequeue();
-		item->val = producer->transformer->producer_transform(item->opcode, item->val);
-		producer->worker_queue->enqueue(item);
+		if(producer->input_queue->get_size()){
+			Item* item = producer->input_queue->dequeue();
+			unsigned long long val = producer->transformer->producer_transform(item->opcode, item->val);
+			producer->worker_queue->enqueue(new Item(item->key, val, item->opcode));
+			delete item;
+		}
 	}
-	delete producer;
 	return nullptr;
 }
 
