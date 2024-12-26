@@ -27,6 +27,7 @@ private:
 
 	bool is_cancel;
 
+	pthread_t thread;
 	// the method for pthread to create a consumer thread
 	static void* process(void* arg);
 };
@@ -39,11 +40,14 @@ Consumer::Consumer(TSQueue<Item*>* worker_queue, TSQueue<Item*>* output_queue, T
 Consumer::~Consumer() {}
 
 void Consumer::start() {
-	// TODO: starts a Consumer thread
+	// TOD0: starts a Consumer thread
+	pthread_create(&thread, nullptr, Consumer::process, this);
 }
 
 int Consumer::cancel() {
-	// TODO: cancels the consumer thread
+	// TOD0: cancels the consumer thread
+	is_cancel = true;
+	return pthread_cancel(thread);
 }
 
 void* Consumer::process(void* arg) {
@@ -54,7 +58,10 @@ void* Consumer::process(void* arg) {
 	while (!consumer->is_cancel) {
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
-		// TODO: implements the Consumer's work
+		// TOD0: implements the Consumer's work
+		Item* item = consumer->worker_queue->dequeue();
+		item->val = consumer->transformer->consumer_transform(item->opcode, item->val);
+		consumer->output_queue->enqueue(item);
 
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 	}

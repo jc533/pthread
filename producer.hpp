@@ -22,6 +22,7 @@ private:
 
 	Transformer* transformer;
 
+	pthread_t thread;
 	// the method for pthread to create a producer thread
 	static void* process(void* arg);
 };
@@ -33,11 +34,20 @@ Producer::Producer(TSQueue<Item*>* input_queue, TSQueue<Item*>* worker_queue, Tr
 Producer::~Producer() {}
 
 void Producer::start() {
-	// TODO: starts a Producer thread
+	// TOD0: starts a Producer thread
+	pthread_create(&thread, nullptr, Producer::process, this);
 }
 
 void* Producer::process(void* arg) {
-	// TODO: implements the Producer's work
+	// TOD0: implements the Producer's work
+	Producer* producer = (Producer*)arg;
+	while(1){
+		Item* item = producer->input_queue->dequeue();
+		item->val = producer->transformer->producer_transform(item->opcode, item->val);
+		producer->worker_queue->enqueue(item);
+	}
+	delete producer;
+	return nullptr;
 }
 
 #endif // PRODUCER_HPP

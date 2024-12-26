@@ -22,7 +22,7 @@ private:
 
 	std::ofstream ofs;
 	TSQueue<Item*> *output_queue;
-
+	pthread_t thread;
 	// the method for pthread to create a writer thread
 	static void* process(void* arg);
 };
@@ -39,11 +39,21 @@ Writer::~Writer() {
 }
 
 void Writer::start() {
-	// TODO: starts a Writer thread
+	// TOD0: starts a Writer thread
+	pthread_create(&thread, nullptr, Writer::process, this);
 }
 
 void* Writer::process(void* arg) {
-	// TODO: implements the Writer's work
+	// TOD0: implements the Writer's work
+	Writer* writer = (Writer*)arg;
+	int lines_written = 0;
+	while(lines_written++ < writer->expected_lines){
+		Item* item = writer->output_queue->dequeue();
+		writer->ofs << item->key << item->val << item->opcode << '\n';
+		delete item;
+		
+	}
+	return nullptr;
 }
 
 #endif // WRITER_HPP
